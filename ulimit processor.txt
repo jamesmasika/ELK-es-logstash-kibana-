@@ -1,0 +1,35 @@
+1： too many open files
+	大多类似UNIX的操作系统，包括Linux和OS X，都提供了限制每个进程和每个基本用户使用线程，文件和网络连接等系统资源的一些方法。 “ulimits” 防止单个用户使用太多的系统资源。有时，这些限制的默认值太小，这会导致正常MongoDB操作过程中出现一系列问题。
+	Red Hat Enterprise Linux和 CentOS 6设置最大进程数为1024，超出了 ulimit 设置。新建一个 /etc/security/limits.d/99-mongodb-nproc.conf 文件，重新设置 soft nproc 和 hard nproc 的值来增加进程限制。具体例子参见 /etc/security/limits.d/90-nproc.conf 。
+资源利用mongod 和 mongos 每次使用线程和文件描述符来跟踪连接和管理内部操作。这部分概述了MongoDB中一般的资源利用形式。利用这部分内容，并结合实际的部署和使用来决定合适的 ulimit 设置。
+ulimit -a
+-t: cpu time (seconds) unlimited
+-f: file size (blocks) unlimited
+-d: data seg size (kbytes) unlimited
+-s: stack size (kbytes) 8192
+-c: core file size (blocks) 0
+-m: resident set size (kbytes) unlimited
+-u: processes 192276
+-n: file descriptors 21000
+-l: locked-in-memory size (kb) 40000
+-v: address space (kb) unlimited
+-x: file locks unlimited
+-i: pending signals 192276
+-q: bytes in POSIX msg queues 819200
+-e: max nice 30
+-r: max rt priority 65
+-N 15: unlimited
+ulimit 是指每个 user 使用各种资源的限制值。因此，无论你的 mongod 实例是以单个用户多进程执行，还是以多 mongod 进程执行，都可以看到对这些资源的连接。同样，要了解到 processes 值（比如 -u ）是指不同进程和子进程线程之和。
+
+
+你可以按下面形式的命令修改 ulimit 的设置。
+
+
+ulimit -n <value>
+对许多版本的Linux来说，您可以通过 -n 选项代替 ulimit -a 输出的任何值来改变值。在OS X上，使用 launchctl limit 命令。参看您的操作系统文档来改变运行系统的系统限制值。
+
+
+注解
+改变 ulimit 设置之后， 要 重启进程修改值才会有效。通过 /proc 文件可以查看运行进程当前的限制值。
+ulimit –n 64000
+ulimit –Hn
