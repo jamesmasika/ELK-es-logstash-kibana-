@@ -1,0 +1,40 @@
+1.1：提升es的jvm内存（数据量小，es足以应付，数据量越来越大，内存不够）
+cd /opt/elk/
+vim elasticsearch/bin/elasticsearch.in.sh
+更改以下：两者最好改成一样的，否则容易引发长时间GC
+ES_MIN_MEM=256m  ==> ES_MIN_MEM=你服务器内存的一半（可以根据服务器情况调节一下）
+ES_MAX_MEM=1g    ==> ES_MAX_MEM=你服务器内存的一半
+
+
+1.2：使用G1 GC
+vim elasticsearch/bin/elasticsearch.in.sh
+把以下四行注释
+JAVA_OPTS="$JAVA_OPTS -XX:+UseParNewGC"
+JAVA_OPTS="$JAVA_OPTS -XX:+UseConcMarkSweepGC"
+
+JAVA_OPTS="$JAVA_OPTS -XX:CMSInitiatingOccupancyFraction=75"
+JAVA_OPTS="$JAVA_OPTS -XX:+UseCMSInitiatingOccupancyOnly"
+改成：
+#JAVA_OPTS="$JAVA_OPTS -XX:+UseParNewGC"
+#JAVA_OPTS="$JAVA_OPTS -XX:+UseConcMarkSweepGC"
+
+#JAVA_OPTS="$JAVA_OPTS -XX:CMSInitiatingOccupancyFraction=75"
+#JAVA_OPTS="$JAVA_OPTS -XX:+UseCMSInitiatingOccupancyOnly"
+
+JAVA_OPTS=”$JAVA_OPTS -XX:+UseG1GC”
+JAVA_OPTS=”$JAVA_OPTS -XX:MaxGCPauseMillis=200″
+
+
+2：提升单用户同时运行的线程数（减少出现too many open files错误）
+vim /etc/security/limits.conf
+添加（nofile表示可以运行的文件数达到65535个）
+root            soft    nofile          65535
+root            hard    nofile          65535
+
+
+3：
+vim /etc/sysctl.conf
+添加
+vm.max_map_count=262144
+vm.dirty_ratio = 10
+vm.dirty_background_ratio = 5
