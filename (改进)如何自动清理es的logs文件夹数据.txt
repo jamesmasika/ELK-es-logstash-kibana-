@@ -1,0 +1,24 @@
+cd /opt/elk
+vim es-autoClean-logs.sh
+输入以下内容,(可以利用CRT,登录ssh直接复制进去,手工输入也行)
+
+#!/bin/bash
+yesterday=`date -d "0 day ago" +%Y-%m-%d`
+find /opt/elk/elasticsearch/logs/ -name "*${yesterday}*" | xargs rm -rf
+echo "clean $yesterday's logs success"
+echo "clean $yesterday's logs success" >> /opt/elk/cleanLogs.log
+
+然后:wq 保存
+测试发现需要给这个文件执行权限
+chmod 777 es-autoClean-logs.sh
+
+如何每天自动运行脚本
+
+crontab -e
+在最后添加以下内容(表示每天1点0分运行清除昨天的log记录) (如果没有设置过,文件是空的,不要担心)
+0 1 * * * /opt/elk/es-autoClean-logs.sh
+
+说明:
+*　　*　　*　　*　　*　　command 
+分　 时　 日　 月　 周　 命令
+
