@@ -1,0 +1,124 @@
+1：es本身日志、
+保存目录：/opt/elk/elasticsearch/logs (我们本机测试有15.2GB)
+
+2：es收集的日志
+2.1: 供查询的日志
+保存目录：/opt/elk/elasticsearch/data/elasticsearch/nodes (我们本机测试有224MB)
+
+
+3：转发保存的日志
+3.1：所有日志
+保存目录：/opt/output_all_log/  (我们本机测试有11.6MB)
+
+3.2：转发日志
+保存目录：/opt/elk/filter/output_filter_log/  (我们本机测试有4.2MB)
+
+
+由上可见，es最大的是logs文件夹下的操作日志，这个需要每天删除，而其他的日志可以按需要删除
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4：脚本
+4.1：自动删除es的logs数据
+
+cd /opt/elk
+vim es-autoClean-logs.sh
+输入以下内容,(可以利用CRT,登录ssh直接复制进去,手工输入也行)
+
+#!/bin/bash
+yesterday=`date -d "1 day ago" +%Y-%m-%d`
+find /opt/elk/elasticsearch/logs/ -name "*${yesterday}*" | xargs rm -rf
+echo "clean $yesterday's logs success"
+echo "clean $yesterday's logs success" >> /opt/elk/cleanLogs.log
+
+然后:wq 保存
+测试发现需要给这个文件执行权限
+chmod 777 es-autoClean-logs.sh
+
+如何每天自动运行脚本
+
+crontab -e
+在最后添加以下内容(表示每天1点0分运行清除昨天的log记录) (如果没有设置过,文件是空的,不要担心)
+0 1 * * * /opt/elk/es-autoClean-logs.sh
+
+说明:
+*　　*　　*　　*　　*　　command 
+分　 时　 日　 月　 周　 命令
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.2：自动删除6个月之前的es的data数据（其他时间也可以）
+
+cd /opt/elk
+vim es-autoClean-dataByMonth.sh
+输入以下内容,(可以利用CRT,登录ssh直接复制进去,手工输入也行)
+
+#!/bin/bash
+month=`date -d "6 month ago" +%Y.%m`
+curl -XDELETE http://127.0.0.1:9200/*${month}* 
+echo "clean $month 's data success"
+echo "clean $month 's data success" >> /opt/elk/cleanDataByMonth.log
+
+然后:wq 保存
+chmod 777 es-autoClean-dataByMonth.sh
+
+如何每月自动运行脚本
+
+crontab -e
+在最后添加以下内容(表示每月1号的1点0分运行清除n月之前的data记录) (如果没有设置过,文件是空的,不要担心)
+0 1 1 * * /opt/elk/es-autoClean-dataByMonth.sh
+
+
+4.3：转发保存的日志占内存比较小，可以不用删除，而且它不提供给es查询，仅作备份。如果要删除可以配置为  按半年删除
+
+cd /opt/elk
+vim es-autoClean-forwardDataByMonth.sh
+输入以下内容,(可以利用CRT,登录ssh直接复制进去,手工输入也行)
+#!/bin/bash
+month=`date -d "6 month ago" +%Y.%m`
+find /opt/output_all_log/ -name "*${month}*" | xargs rm –rf
+find /opt/elk/filter/output_filter_log/ -name "*${month}*" | xargs rm –rf
+echo "clean $month 's forwardData success"
+echo "clean $month 's forwardData success" >> /opt/elk/cleanForwardDataByMonth.log
+然后:wq 保存
+chmod 777 es-autoClean-forwardDataByMonth.sh
+crontab –e
+添加
+0 1 1 * * /opt/elk/es-autoClean-forwardDataByMonth.sh
