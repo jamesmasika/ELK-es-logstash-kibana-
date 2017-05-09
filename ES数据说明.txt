@@ -113,8 +113,8 @@ vim es-autoClean-forwardDataByMonth.sh
 输入以下内容,(可以利用CRT,登录ssh直接复制进去,手工输入也行)
 #!/bin/bash
 month=`date -d "6 month ago" +%Y.%m`
-find /opt/output_all_log/ -name "*${month}*" | xargs rm –rf
-find /opt/elk/filter/output_filter_log/ -name "*${month}*" | xargs rm –rf
+find /opt/output_all_log/ -name "*${month}*" | xargs rm -rf
+find /opt/elk/filter/output_filter_log/ -name "*${month}*" | xargs rm -rf
 echo "clean $month 's forwardData success"
 echo "clean $month 's forwardData success" >> /opt/elk/cleanForwardDataByMonth.log
 然后:wq 保存
